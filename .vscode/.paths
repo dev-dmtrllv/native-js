@@ -1,0 +1,10 @@
+[
+	{
+		"MSBUILD": "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/MSBuild/Current/Bin/MSBuild.exe",
+		"DEVENV": "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/Common7/IDE/devenv.com"
+	},
+	{
+		"MSBUILD": "D:/Programs/Microsoft Visual Studio/2019/Professional/MSBuild/Current/Bin/MSBuild.exe",
+		"DEVENV": "D:/Programs/Microsoft Visual Studio/2019/Professional/Common7/IDE/devenv.com"
+	}
+]

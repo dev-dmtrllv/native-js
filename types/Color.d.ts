@@ -1,0 +1,1 @@
+declare type Color<R extends number = any, G extends number = any, B extends number = any, A extends number = 1> = [R, G, B, A];

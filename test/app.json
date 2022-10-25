@@ -1,0 +1,11 @@
+{
+	"name": "Test App",
+	"type": "application",
+	"entry": {
+		"file": "./dist/index.js",
+		"export": "default"
+	},
+	"resolve": [".tsx", ".ts", ".jsx", ".js", ".json"],
+	"asyncWorkers": 2,
+	"jsWorkers": 4
+}

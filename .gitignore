@@ -1,0 +1,15 @@
+x64
+x86
+dependencies.rar
+dependencies/v8/x64.debug
+dependencies/v8/x64.release
+dependencies/v8/bin
+dependencies/vulkan/lib
+.vscode/targets.log
+.vscode/dryrun.log
+resources/snapshots/out
+obj
+out
+.vs
+logs
+test/dist

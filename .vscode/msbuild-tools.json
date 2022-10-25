@@ -1,0 +1,28 @@
+{
+	"solution": "${workspaceRoot}/native-js.vcxproj",
+	"variables": {
+		"MSBUILD": "D:/Programs/Microsoft Visual Studio/2019/Professional/MSBuild/Current/Bin/MSBuild.exe",
+		"DEVENV": "D:/Programs/Microsoft Visual Studio/2019/Professional/Common7/IDE/devenv.com"
+	},
+	"buildConfigurations": [
+		"Debug",
+		"Release"
+	],
+	"platformConfigurations": [
+		"x64"
+	],
+	"preBuildTasks": [
+
+	],
+	"postBuildTasks": [
+
+	],
+	"debugConfigurations": [
+		{
+			"name": "native-js",
+			"cwd": "${workspaceRoot}",
+			"program": "${workspaceRoot}/x64/${buildConfig}/native-js.exe",
+			"args": ["test"]
+		}
+	]
+}
