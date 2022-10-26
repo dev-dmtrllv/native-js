@@ -80,15 +80,6 @@ namespace NativeJS
 			else if (args[0]->IsExternal())
 			{
 				NativeJS::Worker* w = parseExternal<NativeJS::Worker>(env, args[0]);
-				if (env.isSelfWorker(w))
-				{
-					puts("create self worker");
-				}
-				else
-				{
-					puts("create self worker (from parent)");
-				}
-
 				args.This()->Set(env.context(), string(env, "listeners_"), v8::Object::New(env.isolate()));
 				args.This()->SetInternalField(0, args[0]);
 			}
@@ -188,7 +179,15 @@ namespace NativeJS
 
 		JS_CLASS_METHOD_IMPL(WorkerClass::getParentWorker)
 		{
-			args.GetReturnValue().Set(env.getJsWorker().value());
+			JS::Worker* worker = nullptr;
+			if (env.getJsParentWorker(worker))
+			{
+				args.GetReturnValue().Set(worker->value());
+			}
+			else
+			{
+				args.GetReturnValue().SetUndefined();
+			}
 		}
 
 		JS_CLASS_METHOD_IMPL(WorkerClass::onMessage)

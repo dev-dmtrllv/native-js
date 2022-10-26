@@ -1,10 +1,17 @@
 const main: WorkerEntry = async (worker) =>
 {
-	const timeout = new Timeout(() => 
+	worker.on("test", () => 
 	{
-		console.log("Hello from worker :D");
-		worker.send("test");
-	}, 1000, true);
+		console.log("get test from main");
+	});
+
+	new Timeout(() => 
+	{
+		new Timeout(() => 
+		{
+			worker.send("test");
+		}, 1000, true);
+	}, 500)
 };
 
 export default main;

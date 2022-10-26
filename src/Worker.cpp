@@ -153,8 +153,6 @@ namespace NativeJS
 					case Event::Type::Message:
 					{
 						MessageEvent& e = event->as<MessageEvent>();
-						// env.
-						printf("get msg event %s\n", e.message().c_str());
 						if (std::addressof(e.sender()) != this)
 						{
 							env.emitMessage(e);

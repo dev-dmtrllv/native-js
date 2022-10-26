@@ -69,12 +69,16 @@ namespace NativeJS
 
 	WorkEvent::~WorkEvent() { }
 
+
+
 	BlockingEvent::BlockingEvent(Worker& worker, WorkCallback work, void* data) :
 		Event(Event::Type::Blocking, data),
 		worker_(worker),
 		work_(work),
 		done_(false)
 	{ }
+
+
 
 	MessageEvent::MessageEvent(Worker* sender, Worker* receiver, std::string&& message) :
 		Event(Event::Type::Message),
@@ -83,6 +87,7 @@ namespace NativeJS
 		message_(message),
 		promiseResolver_(sender->env().isolate(), v8::Promise::Resolver::New(sender->env().context()).ToLocalChecked())
 	{ }
+
 
 
 	v8::Local<v8::Promise> MessageEvent::promise() const

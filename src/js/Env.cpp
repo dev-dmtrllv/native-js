@@ -70,6 +70,11 @@ namespace NativeJS::JS
 		nativeJSModule_.Set(isolate(), JS::NativeJSModule::create(*this));
 
 		jsSelfWorker_.wrap(jsClasses_.workerClass.instantiate({ v8::External::New(isolate(), worker_) }).ToLocalChecked());
+		if (parentWorker_ != nullptr)
+		{
+			jsWorkers_.emplace(parentWorker_, *this);
+			jsWorkers_.at(parentWorker_).wrap(jsClasses_.workerClass.instantiate({ v8::External::New(isolate(), parentWorker_) }).ToLocalChecked());
+		}
 	}
 
 	Env::~Env()
@@ -427,6 +432,18 @@ namespace NativeJS::JS
 	JS::Worker& Env::getJsWorker() const
 	{
 		return jsSelfWorker_;
+	}
+
+	
+	bool Env::getJsParentWorker(JS::Worker*& worker) const
+	{
+		if(parentWorker_ != nullptr && jsWorkers_.contains(parentWorker_))
+		{
+			worker = std::addressof(jsWorkers_.at(parentWorker_));
+			return true;
+		}
+		worker = nullptr;
+		return false;
 	}
 
 	bool Env::isSelfWorker(NativeJS::Worker* worker) const

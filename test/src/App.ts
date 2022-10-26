@@ -12,12 +12,12 @@ export default class App extends NativeJS.App
 
 		worker.on("test", () => 
 		{
-			console.log("test sended from worker :)");
+			console.log("got test from worker :)");
 		});
 
 		const timeout = new Timeout(() =>
 		{
-			console.log("Hello");
+			worker.send("test");
 		}, 1000, true);
 	}
 

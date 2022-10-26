@@ -66,8 +66,12 @@ namespace NativeJS
 			bool isJsAppInitialized() const;
 			JS::App& jsApp() const;
 			const JS::EnvClasses& getJsClasses() const;
+
 			void addJsWorker(NativeJS::Worker* worker, v8::Local<v8::Value> jsWorker) const;
 			JS::Worker& getJsWorker() const;
+			bool getJsParentWorker(JS::Worker*& worker) const;
+	
+
 			bool isSelfWorker(NativeJS::Worker* worker) const;
 			void emitMessage(MessageEvent& e);
 
