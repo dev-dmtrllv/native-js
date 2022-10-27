@@ -431,12 +431,6 @@ namespace NativeJS::JS
 		app().postEvent(worker_->events_.create<TimeoutEvent>(*this, index, TimeoutEvent::Type::CANCEL), true);
 	}
 
-	// void Env::removeTimeout(size_t index) const
-	// {
-	// 	timeouts_.free(index);
-	// 	app().postEvent(worker_->events_.create<TimeoutEvent>(*this, index, TimeoutEvent::Type::CANCEL), true);
-	// }
-
 	void Env::resolveTimeout(const size_t index) const
 	{
 		Timeout* timeout = timeouts_.at(index);
