@@ -78,6 +78,8 @@ namespace NativeJS
 		std::condition_variable asyncCV_;
 
 		PersistentList<Worker> workers_;
+		Worker* mainWorker_;
+
 		EventQueue eventQueue_;
 		EventAllocator events_;
 

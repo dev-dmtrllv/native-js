@@ -31,19 +31,11 @@ namespace NativeJS
 
 		void Worker::emitMessage(const std::string& message)
 		{
-			if (listeners_.IsEmpty())
-			{
-				puts("empty :(");
-			}
-			else
+			if (!listeners_.IsEmpty())
 			{
 				v8::Local<v8::Object> v = listeners_.Get(env_.isolate());
 				v8::MaybeLocal<v8::Value> maybeListeners = getFromObject(env(), v, string(env(), message));
-				if (maybeListeners.IsEmpty())
-				{
-					puts("empty 2 :(");
-				}
-				else
+				if (!maybeListeners.IsEmpty())
 				{
 					v8::Local<v8::Value> arrVal = maybeListeners.ToLocalChecked();
 					if (arrVal->IsArray())
@@ -56,10 +48,6 @@ namespace NativeJS
 							v8::Local<v8::Function> fn = arr->Get(env_.context(), i).ToLocalChecked().As<v8::Function>();
 							fn->Call(env_.context(), fn, 0, nullptr).ToLocalChecked();
 						}
-					}
-					else
-					{
-						puts("no array :S");
 					}
 				}
 			}
@@ -128,20 +116,18 @@ namespace NativeJS
 			if (env.isSelfWorker(worker))
 			{
 				v8::Local<v8::Promise::Resolver> resolver = v8::Promise::Resolver::New(env.context()).ToLocalChecked();
-				resolver->Reject(env.context(), string(env, "Cannot terminate parent worker!"));
+				resolver->Reject(env.context(), string(env, "Cannot terminate it self!"));
 				args.GetReturnValue().Set(resolver->GetPromise());
 			}
 			else
 			{
-				v8::Local<v8::Promise> promise = env.doAsyncWork([](Event* event)
+				args.GetReturnValue().Set(env.doAsyncWork([](Event* event)
 				{
 					AsyncEvent* e = static_cast<AsyncEvent*>(event);
 					NativeJS::Worker* worker = e->data<NativeJS::Worker>();
 					int exitCode = 0;
 					e->worker().app().destroyWorker(worker);
-				}, nullptr, worker, true);
-
-				args.GetReturnValue().Set(promise);
+				}, nullptr, worker, true));
 			}
 		}
 

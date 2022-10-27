@@ -148,11 +148,23 @@ namespace NativeJS
 	{
 		isTerminating_ = true;
 
+		if(mainWorker_ != nullptr)
+			workers_.free(mainWorker_);
+
 		workers_.forEach([&](Worker* worker)
 		{
-			int exitCode = 0;
-			if (worker->terminate(exitCode))
-				logger().info("Worker exited with code ", exitCode);
+			if(!worker->isTerminated() && worker->isDetached())
+			{
+				int exitCode = 0;
+				if(worker->terminate(exitCode))
+				{
+					logger().error("Worker exited with code ", exitCode);
+				}
+				else
+				{
+					logger().error("Could not terminate worker!");
+				}
+			}
 		});
 
 		logger().debug("Disposing v8...");
@@ -311,7 +323,7 @@ namespace NativeJS
 #ifdef _WINDOWS
 	void App::run()
 	{
-		Worker* worker = createWorker(appConfig_.entry.file);
+		mainWorker_ = createWorker(appConfig_.entry.file);
 
 		MSG msg = { };
 		bool isRunning = true;
@@ -417,18 +429,18 @@ namespace NativeJS
 	}
 
 	void CALLBACK App::timerProc(HWND hwnd, UINT uMsg, UINT_PTR intPtr, DWORD index)
-	{		
+	{
 		assert(currentInstance_);
 
 		NativeJS::App& app = *currentInstance_;
 
-		if(app.timeoutEvents_.contains(intPtr))
+		if (app.timeoutEvents_.contains(intPtr))
 		{
 			TimeoutEvent* e = app.timeoutEvents_.at(intPtr);
-			
+
 			e->env.worker().postEvent(e);
 
-			if(!e->loop)
+			if (!e->loop)
 			{
 				KillTimer(hwnd, intPtr);
 			}

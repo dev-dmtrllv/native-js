@@ -19,6 +19,7 @@ namespace NativeJS
 		returnCode_(0),
 		eventQueue_(nullptr),
 		isRunning_(false),
+		isTerminated_(false),
 		isBlocked_(false),
 		blockingWorkMutex_(),
 		blockingWorkCv_()
@@ -38,8 +39,13 @@ namespace NativeJS
 		thread_([&]() { returnCode_ = entry(); }),
 		returnCode_(0),
 		eventQueue_(nullptr),
-		isRunning_(false)
+		isRunning_(false),
+		isTerminated_(false),
+		isBlocked_(false),
+		blockingWorkMutex_(),
+		blockingWorkCv_()
 	{
+		assert(entry_.is_absolute());
 		std::unique_lock lk(mutex_);
 		cv_.wait(lk, [&]() { return isRunning_.load(std::memory_order::acquire); });
 	}
@@ -48,16 +54,20 @@ namespace NativeJS
 	{
 		int returnCode = 0;
 		if (terminate(returnCode))
-			app_.logger().info("Worker exited with code ", returnCode);
+			app_.logger().info("Worker ", index_, " exited with code ", returnCode);
 	}
 
 	bool Worker::terminate(int& exitCode)
 	{
+		if(isTerminated())
+			return false;
+
 		if (thread_.joinable())
 		{
 			eventQueue_->postEvent(Event::getTerminateEvent());
 			thread_.join();
 			exitCode = returnCode_;
+			isTerminated_.store(true, std::memory_order::release);
 			return true;
 		}
 		return false;

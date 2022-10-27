@@ -79,7 +79,21 @@ namespace NativeJS::JS
 
 	Env::~Env()
 	{
-
+		for (auto& [first, second] : jsWorkers_)
+		{
+			if (first->parentWorker_ == worker_)
+			{
+				int exitCode = 0;
+				if (first->terminate(exitCode))
+				{
+					app().logger().info("Child Worker exited with code ", exitCode);
+				}
+				else
+				{
+					puts(":(");
+				}
+			}
+		}
 	}
 
 	/*static*/ v8::MaybeLocal<v8::Module> Env::importModule(v8::Local<v8::Context> context, v8::Local<v8::String> specifier, v8::Local<v8::FixedArray> import_assertions, v8::Local<v8::Module> referrer)
@@ -108,7 +122,7 @@ namespace NativeJS::JS
 		}
 		else
 		{
-			fromPath = env.app().rootDir(); // here is the error i guess??
+			fromPath = env.app().rootDir();
 		}
 
 		if (importPath.is_relative())
@@ -346,16 +360,9 @@ namespace NativeJS::JS
 
 	v8::Local<v8::Promise> Env::sendMessageToWorker(NativeJS::Worker* receiver, std::string&& message) const
 	{
-		// if(receiver == worker_)
-		// {
-
-		// }
-		// else
-		{
-			MessageEvent* event = worker_->events_.create<MessageEvent>(worker_, receiver, std::forward<std::string>(message));
-			receiver->postEvent(event);
-			return event->promise();
-		}
+		MessageEvent* event = worker_->events_.create<MessageEvent>(worker_, receiver, std::forward<std::string>(message));
+		receiver->postEvent(event);
+		return event->promise();
 	}
 
 	void Env::emitMessage(MessageEvent& e)
@@ -434,10 +441,10 @@ namespace NativeJS::JS
 		return jsSelfWorker_;
 	}
 
-	
+
 	bool Env::getJsParentWorker(JS::Worker*& worker) const
 	{
-		if(parentWorker_ != nullptr && jsWorkers_.contains(parentWorker_))
+		if (parentWorker_ != nullptr && jsWorkers_.contains(parentWorker_))
 		{
 			worker = std::addressof(jsWorkers_.at(parentWorker_));
 			return true;

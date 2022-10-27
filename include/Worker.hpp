@@ -32,6 +32,9 @@ namespace NativeJS
 
 		inline const JS::Env& env() const { assert(env_); return *env_; }
 		inline App& app() const { return app_; }
+		inline bool isTerminated() const { return isTerminated_.load(std::memory_order::acquire); }
+		inline bool isDetached() const { return parentWorker_ == nullptr; }
+		
 
 	protected:
 		int entry();
@@ -47,6 +50,7 @@ namespace NativeJS
 		size_t returnCode_;
 		std::atomic<bool> isRunning_;
 		std::atomic<bool> isBlocked_;
+		std::atomic<bool> isTerminated_;
 		std::mutex blockingWorkMutex_;
 		std::condition_variable blockingWorkCv_;
 
