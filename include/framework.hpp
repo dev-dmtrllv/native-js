@@ -67,6 +67,8 @@
 
 
 // --------------  VULKAN  ---------------- //
+#define VK_USE_PLATFORM_WIN32_KHR 1
+
 #include "vulkan/vulkan.hpp"
 
 #pragma comment(lib, "vulkan-1.lib")

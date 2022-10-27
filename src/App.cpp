@@ -493,10 +493,7 @@ namespace NativeJS
 
 			case WM_PAINT:
 			{
-				PAINTSTRUCT ps;
-				HDC hdc = BeginPaint(hwnd, &ps);
-				FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 2));
-				EndPaint(hwnd, &ps);
+				app.windowManager_.getWindow(hwnd)->render();
 			}
 			return 0;
 		}

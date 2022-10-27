@@ -11,6 +11,7 @@ namespace NativeJS
 
 	Window::Window(WindowManager& windowManager, const std::string& title) :
 		index_(0),
+		renderer_(*this),
 		title_(title),
 		windowManager_(windowManager),
 		handle_(0),
@@ -21,6 +22,7 @@ namespace NativeJS
 
 	Window::Window(WindowManager& windowManager, std::string&& title) :
 		index_(0),
+		renderer_(*this),
 		title_(title),
 		windowManager_(windowManager),
 		handle_(0),
@@ -31,7 +33,7 @@ namespace NativeJS
 
 	Window::~Window()
 	{
-		
+
 	}
 
 	void Window::registerJsObject(Worker* worker, v8::Local<v8::Value> jsWindow)
@@ -55,6 +57,11 @@ namespace NativeJS
 		return getJsObject(std::addressof(worker));
 	}
 
+	void Window::render()
+	{
+		renderer_.render();
+	}
+
 	bool Window::initialize()
 	{
 		if (isInitialized_)
@@ -63,6 +70,38 @@ namespace NativeJS
 		std::wstring wTitle = Utils::toWString(title_.c_str());
 		handle_ = CreateWindowEx(0, App::WIN_CLASS_NAME.c_str(), wTitle.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, GetModuleHandle(NULL), NULL);
 #endif
+
+		if (handle_ != nullptr)
+		{
+			try
+			{
+				renderer_.initialize();
+			}
+			catch (const std::runtime_error& e)
+			{
+				windowManager_.app().logger().error(e.what());
+				throw e;
+			}
+		}
+		else
+		{
+			windowManager_.app().logger().error("Could not initialize window!");
+		}
+	}
+
+	bool Window::getSize(VkExtent2D& extent) const
+	{
+		if (handle_ != NULL)
+		{
+			RECT rect;
+			if (GetClientRect(handle_, &rect))
+			{
+				extent.width = rect.right - rect.left;
+				extent.height = rect.bottom - rect.top;
+				return true;
+			}
+		}
+		return false;
 	}
 
 	void Window::show()

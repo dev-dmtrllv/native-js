@@ -2,6 +2,7 @@
 
 #include "framework.hpp"
 #include "js/JSWindow.hpp"
+#include "gfx/Renderer.hpp"
 
 namespace NativeJS
 {
@@ -31,13 +32,18 @@ namespace NativeJS
 		bool initialize();
 		void show();
 		void close();
+		bool getSize(VkExtent2D& extent) const;
 
 		inline const size_t& index() const { return index_; }
 		inline const Handle& handle() const { return handle_; }
+		inline WindowManager& windowManager() const { return windowManager_; }
+		const GFX::Renderer& renderer() const { return renderer_; };
 
 		void registerJsObject(Worker* worker, v8::Local<v8::Value> jsWindow);
 		JS::Window* getJsObject(Worker* worker);
 		JS::Window* getJsObject(Worker& worker);
+
+		void render();
 
 	private:
 		template<typename Callback>
@@ -57,6 +63,7 @@ namespace NativeJS
 
 		mutable size_t index_;
 		WindowManager& windowManager_;
+		GFX::Renderer renderer_;
 		std::string title_;
 		Handle handle_;
 
