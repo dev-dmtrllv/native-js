@@ -5,20 +5,27 @@ export default class App extends NativeJS.App
 {
 	protected async onLoad(args: NativeJS.AppArgs)
 	{
+		// Create a window
 		const w = new Window("Window 1 :D");
 		w.show();
 
-		const worker = new Worker(__dirname + "test.worker");
+		let i = 0;
 
-		worker.on("test", () => 
+		const interval = setInterval(() => 
 		{
-			console.log("got test from worker :)");
-		});
+			console.log(i++);
+		}, 500);
 
-		const timeout = new Timeout(() =>
-		{
-			worker.send("test");
-		}, 1000, true);
+		// const interval2 = setInterval(() => 
+		// {
+		// 	console.log(i++);
+		// }, 711);
+
+		// setTimeout(() => 
+		// {
+		// 	interval.cancel();
+		// 	interval2.cancel();
+		// }, 3000);
 	}
 
 	protected async onQuit(e: NativeJS.QuitEvent)

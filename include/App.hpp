@@ -37,7 +37,7 @@ namespace NativeJS
 		App(int argc, char** argv, std::filesystem::path&& rootDir, const size_t maxAsyncWorkers, const size_t maxV8PlatformThreads, const size_t tickTimeout);
 		App(const App&) = delete;
 		App(App&&) = delete;
-	
+
 	public:
 		~App();
 
@@ -46,14 +46,14 @@ namespace NativeJS
 		Worker* createWorker(const std::filesystem::path& entry, Worker* parentWorker = nullptr);
 		Worker* createWorker(std::filesystem::path&& entry, Worker* parentWorker = nullptr);
 		bool destroyWorker(Worker* worker);
-		
+
 		std::vector<const char*> getAppArgs() const;
 		size_t getTickTimeout() const;
 		Logger& logger();
 		const std::filesystem::path& rootDir() const;
 		const AppConfig& appConfig() const;
 		WindowManager& windowManager();
-		
+
 		bool getAsyncWork(Event*& event);
 		bool postEvent(Event* event, bool onMainThread = false);
 
@@ -78,6 +78,8 @@ namespace NativeJS
 		std::condition_variable asyncCV_;
 
 		PersistentList<Worker> workers_;
+		Worker* mainWorker_;
+
 		EventQueue eventQueue_;
 		EventAllocator events_;
 
@@ -87,6 +89,7 @@ namespace NativeJS
 		WindowManager windowManager_;
 
 		std::unordered_map<UINT_PTR, TimeoutEvent*> timeoutEvents_;
+		std::unordered_map<size_t, UINT_PTR> timeoutIDsToPtrs_;
 
 		bool isTerminating_;
 

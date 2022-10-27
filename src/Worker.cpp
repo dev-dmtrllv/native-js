@@ -19,6 +19,7 @@ namespace NativeJS
 		returnCode_(0),
 		eventQueue_(nullptr),
 		isRunning_(false),
+		isTerminated_(false),
 		isBlocked_(false),
 		blockingWorkMutex_(),
 		blockingWorkCv_()
@@ -38,8 +39,13 @@ namespace NativeJS
 		thread_([&]() { returnCode_ = entry(); }),
 		returnCode_(0),
 		eventQueue_(nullptr),
-		isRunning_(false)
+		isRunning_(false),
+		isTerminated_(false),
+		isBlocked_(false),
+		blockingWorkMutex_(),
+		blockingWorkCv_()
 	{
+		assert(entry_.is_absolute());
 		std::unique_lock lk(mutex_);
 		cv_.wait(lk, [&]() { return isRunning_.load(std::memory_order::acquire); });
 	}
@@ -48,16 +54,20 @@ namespace NativeJS
 	{
 		int returnCode = 0;
 		if (terminate(returnCode))
-			app_.logger().info("Worker exited with code ", returnCode);
+			app_.logger().info("Worker ", index_, " exited with code ", returnCode);
 	}
 
 	bool Worker::terminate(int& exitCode)
 	{
+		if (isTerminated())
+			return false;
+
 		if (thread_.joinable())
 		{
 			eventQueue_->postEvent(Event::getTerminateEvent());
 			thread_.join();
 			exitCode = returnCode_;
+			isTerminated_.store(true, std::memory_order::release);
 			return true;
 		}
 		return false;
@@ -84,17 +94,10 @@ namespace NativeJS
 
 		const size_t tickTimeout = app_.getTickTimeout();
 
-		const auto pop = [&]()
-		{
-			if (tickTimeout != 0)
-				return eventQueue_->popEvent(event, tickTimeout);
-			return eventQueue_->popEvent(event);
-		};
-
 		while (!terminated)
 		{
 			JS::Env::Scope scope(env);
-			if (pop())
+			if (eventQueue_->popEvent(event))
 			{
 				switch (event->type())
 				{
@@ -109,7 +112,7 @@ namespace NativeJS
 
 						const bool wasLastProcessed = e.process([&](const OSEvent& nativeEvent)
 						{
-							auto getWindow = [&](){ return env.app().windowManager().getWindow(nativeEvent.hwnd)->getJsObject(env.worker()); };
+							auto getWindow = [&]() { return env.app().windowManager().getWindow(nativeEvent.hwnd)->getJsObject(env.worker()); };
 
 							switch (nativeEvent.uMsg)
 							{
@@ -187,6 +190,34 @@ namespace NativeJS
 		}
 
 		isRunning_.store(false, std::memory_order::release);
+
+		events_.forEach([&](Event* event)
+		{
+			if (event->cancel())
+				events_.remove(event);
+		});
+		printf("got events: %zu\n", events_.size());
+		while (events_.size() > 0)
+		{
+			JS::Env::Scope scope(env);
+			if (eventQueue_->popEvent(event))
+			{
+				switch (event->type())
+				{
+					case Event::Type::Async:
+					{
+						events_.remove(event);
+					}
+					break;
+					case Event::Type::Message:
+					{
+						if (std::addressof(event->as<MessageEvent>().sender()) == this)
+							events_.remove(event);
+					}
+					break;
+				}
+			}
+		}
 
 		return 0;
 	}

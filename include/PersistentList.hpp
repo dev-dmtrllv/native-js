@@ -22,6 +22,11 @@ namespace NativeJS
 			bool isFree;
 		};
 	public:
+		PersistentList() :
+			size_(0),
+			free_(),
+			list_()
+		{}
 
 		template<class... Args>
 			requires std::constructible_from<T, Args...>
@@ -35,7 +40,6 @@ namespace NativeJS
 				free_.erase(free_.begin() + i);
 				node->isFree = false;
 				std::construct_at<T>(node->data, std::forward<Args>(args)...);
-				return node->index;
 			}
 			else
 			{
@@ -106,6 +110,6 @@ namespace NativeJS
 	private:
 		std::vector<Node*> list_;
 		std::vector<Node*> free_;
-		size_t size_;
+		size_t size_ = 0;
 	};
 }

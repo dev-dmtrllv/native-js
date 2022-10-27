@@ -113,11 +113,26 @@ namespace NativeJS
 		return nativeEvent_;
 	}
 
-	TimeoutEvent::TimeoutEvent(const JS::Env& env, const size_t timeoutIndex, const std::chrono::milliseconds resolveTime, const bool loop) :
+
+	TimeoutEvent::TimeoutEvent(const JS::Env& env, const size_t timeoutIndex, Type type) :
+		Event(Event::Type::Timeout),
+		type(type),
+		env(env),
+		timeoutIndex(timeoutIndex),
+		duration(0),
+		resolveTime(0),
+		loop(false)
+	{
+		assert(type != Type::INIT);
+	}
+
+	TimeoutEvent::TimeoutEvent(const JS::Env& env, const size_t timeoutIndex, const std::chrono::milliseconds resolveTime, const size_t duration, const bool loop) :
 		Event(Event::Type::Timeout),
 		env(env),
 		timeoutIndex(timeoutIndex),
 		resolveTime(resolveTime),
-		loop(loop)
+		duration(duration),
+		loop(loop),
+		type(Type::INIT)
 	{ }
 }

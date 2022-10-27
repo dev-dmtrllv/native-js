@@ -41,6 +41,13 @@ namespace NativeJS
 			const Env& env();
 			v8::Local<v8::Value> value();
 
+			template<typename T = ObjectWrapper>
+				requires Concepts::Extends<ObjectWrapper, T>
+			void setWeak(typename v8::WeakCallbackInfo<T>::Callback callback)
+			{
+				value_.SetWeak<T>(static_cast<T*>(this), callback, v8::WeakCallbackType::kParameter);
+			}
+
 		protected:
 			virtual void initializeProps() = 0;
 

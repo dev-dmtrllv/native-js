@@ -59,18 +59,20 @@ namespace NativeJS
 
 			v8::Local<v8::Promise> sendMessageToWorker(NativeJS::Worker* receiver, std::string&& message) const;
 			v8::Local<v8::Value> createEvent(Event* event) const;
-			void addTimeout(v8::Local<v8::Function> func, v8::Local<v8::Value> ms, v8::Local<v8::Value> timeoutObj, v8::Local<v8::Value> loop) const;
+			bool addTimeout(v8::Local<v8::Function> func, v8::Local<v8::Value> ms, v8::Local<v8::Value> timeoutObj, v8::Local<v8::Value> loopVal, size_t& index) const;
 			void resolveTimeout(const size_t index) const;
+			void removeTimeout(size_t index) const;
 
-			void initializeJSApp(v8::Local<v8::Value> value) const;
+				void initializeJSApp(v8::Local<v8::Value> value) const;
 			bool isJsAppInitialized() const;
 			JS::App& jsApp() const;
 			const JS::EnvClasses& getJsClasses() const;
 
 			void addJsWorker(NativeJS::Worker* worker, v8::Local<v8::Value> jsWorker) const;
+			void removeJsWorker(NativeJS::Worker* worker) const;
 			JS::Worker& getJsWorker() const;
 			bool getJsParentWorker(JS::Worker*& worker) const;
-	
+
 
 			bool isSelfWorker(NativeJS::Worker* worker) const;
 			void emitMessage(MessageEvent& e);
