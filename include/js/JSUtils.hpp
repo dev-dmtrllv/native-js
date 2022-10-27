@@ -55,13 +55,28 @@ namespace NativeJS::JS
 		return static_cast<T*>(args.This()->GetInternalField(i).As<v8::External>()->Value());
 	}
 
-	void setInternalPointer(const v8::FunctionCallbackInfo<v8::Value> &args, void* pointer, size_t i = 0);
-
-	template<typename T>
-	T* parseExternal(const BaseEnv& env, v8::Local<v8::External> external) { return static_cast<T*>(external->Value()); }
+	void setInternalPointer(const v8::FunctionCallbackInfo<v8::Value> &args, void* pointer, size_t index = 0);
+	void setInternalPointer(const BaseEnv& env, v8::Local<v8::Value> val, void* pointer, size_t index = 0);
 
 	template<typename T>
 	T* parseExternal(const BaseEnv& env, v8::Local<v8::Value> val) { return val->IsExternal() ? static_cast<T*>(val.As<v8::External>()->Value()) : nullptr; }
 	
-
+	template<typename T>
+	bool parseNumber(v8::Local<v8::Context> ctx, v8::Local<v8::Value> val, T& out)
+	{
+		if(val.IsEmpty())
+			return false;
+			
+		if(val->IsNumber())
+		{
+			out = static_cast<T>(val.As<v8::Number>()->IntegerValue(ctx).ToChecked());
+			return true;
+		}
+		else if(val->IsBigInt())
+		{
+			out = static_cast<T>(val.As<v8::BigInt>()->Uint64Value());
+			return true;
+		}
+		return false;
+	}
 }

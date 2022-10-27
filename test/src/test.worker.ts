@@ -11,7 +11,7 @@ const main: WorkerEntry = async (worker) =>
 		{
 			worker.send("test");
 		}, 1000, true);
-	}, 500)
+	}, 500);
 };
 
 export default main;

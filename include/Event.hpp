@@ -187,11 +187,21 @@ namespace NativeJS
 	class TimeoutEvent : public Event
 	{
 	public:
-		TimeoutEvent(const JS::Env& env, const size_t timeoutIndex, const std::chrono::milliseconds resolveTime, const bool loop);
+		enum class Type
+		{
+			INIT,
+			CANCEL,
+			RESET,
+		};
 
+		TimeoutEvent(const JS::Env& env, const size_t timeoutIndex, Type type);
+		TimeoutEvent(const JS::Env& env, const size_t timeoutIndex, const std::chrono::milliseconds resolveTime, const size_t duration, const bool loop);
+
+		const Type type;
 		const JS::Env& env;
-		std::chrono::milliseconds resolveTime;
 		const size_t timeoutIndex;
+		const std::chrono::milliseconds resolveTime;
+		const size_t duration;
 		const bool loop;
 	};
 }

@@ -148,15 +148,15 @@ namespace NativeJS
 	{
 		isTerminating_ = true;
 
-		if(mainWorker_ != nullptr)
+		if (mainWorker_ != nullptr)
 			workers_.free(mainWorker_);
 
 		workers_.forEach([&](Worker* worker)
 		{
-			if(!worker->isTerminated() && worker->isDetached())
+			if (!worker->isTerminated() && worker->isDetached())
 			{
 				int exitCode = 0;
-				if(worker->terminate(exitCode))
+				if (worker->terminate(exitCode))
 				{
 					logger().error("Worker exited with code ", exitCode);
 				}
@@ -339,6 +339,7 @@ namespace NativeJS
 
 			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
 			{
+				logger().debug("got event ", msg.message);
 				if (msg.message == WM_QUIT)
 				{
 					emitEvent(msg.hwnd, msg.message, msg.wParam, msg.lParam); // ???
@@ -395,34 +396,57 @@ namespace NativeJS
 						case Event::Type::Timeout:
 						{
 							TimeoutEvent* e = static_cast<TimeoutEvent*>(event);
-
-							const size_t r = e->resolveTime.count();
-							const size_t now = Utils::now<std::chrono::milliseconds>().count();
-							if (now <= r)
+							if (e->type == TimeoutEvent::Type::CANCEL)
 							{
-								static UINT_PTR timerCounter = 0;
-								UINT_PTR timerID = SetTimer(nullptr, ++timerCounter, r - now, App::timerProc);
-								if (timerID == 0)
+								if (!timeoutIDsToPtrs_.contains(e->timeoutIndex))
 								{
-									puts("Could not create timer!");
+									printf("Could not get timer with id %zu\n", e->timeoutIndex);
 								}
 								else
 								{
-									puts("got timeout event");
-									timeoutEvents_.emplace(timerID, e);
+									UINT_PTR timerID = timeoutIDsToPtrs_.at(e->timeoutIndex);
+									KillTimer(NULL, timerID);
+									timeoutIDsToPtrs_.erase(e->timeoutIndex);
+									timeoutEvents_.erase(timerID);
 								}
+							}
+							else if (e->type == TimeoutEvent::Type::RESET)
+							{
+
 							}
 							else
 							{
-								puts("resolve directly :D");
+								const size_t r = e->resolveTime.count();
+								const size_t now = Utils::now<std::chrono::milliseconds>().count();
+								if (now <= r)
+								{
+									static UINT_PTR timerCounter = 0;
+									UINT_PTR timerID = SetTimer(nullptr, ++timerCounter, r - now, App::timerProc);
+									if (timerID == 0)
+									{
+										puts("Could not create timer!");
+									}
+									else
+									{
+										puts("got timeout event");
+
+										timeoutEvents_.emplace(timerID, e);
+										timeoutIDsToPtrs_.emplace(e->timeoutIndex, timerID);
+									}
+								}
+								else
+								{
+									puts("resolve directly :D");
+								}
 							}
+
 						}
 						break;
 					}
 				}
 				else
 				{
-					// logger_.debug("Event canceled!");
+					logger_.debug("Event canceled!");
 				}
 			}
 		}
@@ -443,6 +467,10 @@ namespace NativeJS
 			if (!e->loop)
 			{
 				KillTimer(hwnd, intPtr);
+			}
+			else
+			{
+				SetTimer(hwnd, intPtr, e->duration, App::timerProc);
 			}
 		}
 	}

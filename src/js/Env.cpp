@@ -3,9 +3,8 @@
 #include "App.hpp"
 #include "js/JSUtils.hpp"
 #include "js/JSObject.hpp"
-#include "js/JSConsole.hpp"
 #include "js/NativeJSModule.hpp"
-#include "js/JSProcess.hpp"
+#include "js/JSGlobals.hpp"
 
 namespace NativeJS::JS
 {
@@ -60,11 +59,7 @@ namespace NativeJS::JS
 
 		// expose globals
 		JS::Object global(*this, context()->Global());
-
-		JS::Console::expose(*this, global);
-		JS::Process::expose(*this, global);
-		global.set("Worker", jsClasses_.workerClass.getClass(), v8::PropertyAttribute::ReadOnly);
-		global.set("Timeout", jsClasses_.timeoutClass.getClass(), v8::PropertyAttribute::ReadOnly);
+		JS::JSGlobals::expose(*this, global);
 
 		// create the native-js module
 		nativeJSModule_.Set(isolate(), JS::NativeJSModule::create(*this));
@@ -73,7 +68,14 @@ namespace NativeJS::JS
 		if (parentWorker_ != nullptr)
 		{
 			jsWorkers_.emplace(parentWorker_, *this);
-			jsWorkers_.at(parentWorker_).wrap(jsClasses_.workerClass.instantiate({ v8::External::New(isolate(), parentWorker_) }).ToLocalChecked());
+			JS::Worker& w = jsWorkers_.at(parentWorker_);
+			w.wrap(jsClasses_.workerClass.instantiate({ v8::External::New(isolate(), parentWorker_) }).ToLocalChecked());
+			w.setWeak([](const v8::WeakCallbackInfo<ObjectWrapper>& data)
+			{
+				const Env& env = data.GetParameter()->env();
+				NativeJS::Worker* worker = static_cast<NativeJS::Worker*>(data.GetParameter()->value().As<v8::Object>()->GetInternalField(0).As<v8::External>()->Value());
+				env.removeJsWorker(worker);
+			});
 		}
 	}
 
@@ -379,28 +381,61 @@ namespace NativeJS::JS
 	{
 		jsWorkers_.emplace(worker, *this);
 		JS::Worker& w = jsWorkers_.at(worker);
-		w.wrap(jsWorker);
+		w.wrap(jsClasses_.workerClass.instantiate({ v8::External::New(isolate(), worker) }).ToLocalChecked());
+		w.setWeak([](const v8::WeakCallbackInfo<ObjectWrapper>& data)
+		{
+			puts("weak callback called");
+			const Env& env = data.GetParameter()->env();
+			NativeJS::Worker* worker = static_cast<NativeJS::Worker*>(data.GetParameter()->value().As<v8::Object>()->GetInternalField(0).As<v8::External>()->Value());
+			env.removeJsWorker(worker);
+		});
 	}
 
-	void Env::addTimeout(v8::Local<v8::Function> func, v8::Local<v8::Value> ms, v8::Local<v8::Value> timeoutObj, v8::Local<v8::Value> loopVal) const
+	void Env::removeJsWorker(NativeJS::Worker* worker) const
 	{
-		if (!ms->IsNumber() && !ms->IsBigInt())
-			return throwException("Provided timeout is not a number or BigInt!");
+		if (jsWorkers_.contains(worker))
+			jsWorkers_.erase(worker);
+	}
 
+	bool Env::addTimeout(v8::Local<v8::Function> func, v8::Local<v8::Value> msVal, v8::Local<v8::Value> timeoutObj, v8::Local<v8::Value> loopVal, size_t& index) const
+	{
 		if (!loopVal.IsEmpty() && !loopVal->IsBoolean())
-			return throwException("Provided loop argument is not a boolean!");
+		{
+			throwException("Provided loop argument is not a boolean!");
+			return false;
+		}
 
-		const int64_t v = ms->IntegerValue(context()).ToChecked();
+		int64_t ms = 0;
+
+		if (!parseNumber(context(), msVal, ms))
+		{
+			throwException("Provided timeout is not a number or BigInt!");
+			return false;
+		}
 		const bool loop = loopVal.IsEmpty() ? false : loopVal->BooleanValue(isolate());
 
-		std::chrono::milliseconds resolveTime = Utils::now<std::chrono::milliseconds>() + std::chrono::milliseconds(v);
+		std::chrono::milliseconds resolveTime = Utils::now<std::chrono::milliseconds>() + std::chrono::milliseconds(ms);
 
-		size_t index = timeouts_.alloc(*this, resolveTime, loop);
+		index = timeouts_.alloc(*this, resolveTime, loop);
 		Timeout* t = timeouts_.at(index);
 		t->setIndex(index);
 		t->wrap(timeoutObj);
-		app().postEvent(worker_->events_.create<TimeoutEvent>(*this, index, resolveTime, loop), true);
+		app().postEvent(worker_->events_.create<TimeoutEvent>(*this, index, resolveTime, ms, loop), true);
+
+		return true;
 	}
+
+	void Env::removeTimeout(size_t index) const
+	{
+		// timeouts_.free(index);
+		app().postEvent(worker_->events_.create<TimeoutEvent>(*this, index, TimeoutEvent::Type::CANCEL), true);
+	}
+
+	// void Env::removeTimeout(size_t index) const
+	// {
+	// 	timeouts_.free(index);
+	// 	app().postEvent(worker_->events_.create<TimeoutEvent>(*this, index, TimeoutEvent::Type::CANCEL), true);
+	// }
 
 	void Env::resolveTimeout(const size_t index) const
 	{

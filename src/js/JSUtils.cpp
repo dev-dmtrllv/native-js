@@ -92,4 +92,9 @@ namespace NativeJS::JS
 	{
 		args.This()->SetInternalField(i, v8::External::New(args.GetIsolate(), pointer));
 	}
+
+	void setInternalPointer(const BaseEnv& env, v8::Local<v8::Value> val, void* pointer, size_t index)
+	{
+		val.As<v8::Object>()->SetInternalField(index, v8::External::New(env.isolate(), pointer));
+	}
 }
