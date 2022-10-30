@@ -1,8 +1,6 @@
 #include "framework.hpp"
 
 #include "App.hpp"
-#include "utils.hpp"
-
 
 int main(int argc, char** argv)
 {
@@ -13,6 +11,8 @@ int main(int argc, char** argv)
 	app.run();
 
 	return App::terminate();
+
+	return 0;
 }
 
 #ifdef _WINDOWS

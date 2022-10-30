@@ -2,6 +2,7 @@
 #include "js/JSWindow.hpp"
 #include "js/Env.hpp"
 #include "App.hpp"
+#include "js/JSConsole.hpp"
 
 namespace NativeJS::JS
 {
@@ -14,11 +15,13 @@ namespace NativeJS::JS
 		loadMethod(onLoad_, "onLoad");
 		loadMethod(onClose_, "onClose");
 		loadMethod(onClosed_, "onClosed");
+		loadMethod(render_, "render");
 	}
 
 	JS_METHOD_IMPL(Window::onLoad);
 	JS_METHOD_IMPL(Window::onClose);
 	JS_METHOD_IMPL(Window::onClosed);
+	JS_METHOD_IMPL(Window::render);
 
 	JS_CLASS_METHOD_IMPL(WindowClass::onCreate)
 	{
@@ -75,6 +78,42 @@ namespace NativeJS::JS
 		}
 	}
 
+	static void parseJsx(const Env& env, v8::Local<v8::Object> jsx)
+	{
+		v8::Local<v8::Value> type = getFromObject(env, jsx, "type").ToLocalChecked();
+		v8::Local<v8::String> props = v8::JSON::Stringify(env.context(), getFromObject(env, jsx, "props").ToLocalChecked()).ToLocalChecked();
+		puts("type");
+		JS::Console::logValue(env, type);
+		puts("props");
+		JS::Console::logValue(env, props);
+		v8::Local<v8::Value> children;
+		if (getFromObject(env, jsx, "children", children))
+		{
+			if (children->IsArray())
+			{
+				v8::Local<v8::Array> arr = children.As<v8::Array>();
+				const size_t l = arr->Length();
+				for (size_t i = 0; i < l; i++)
+				{
+					v8::Local<v8::Value> child = arr->Get(env.context(), i).ToLocalChecked();
+					puts("child");
+					JS::Console::logValue(env, type);
+				}
+			}
+		}
+
+		if (type->IsFunction())
+		{
+			parseJsx(env, type.As<v8::Function>()->CallAsConstructor(env.context(), 0, nullptr).ToLocalChecked().As<v8::Object>());
+		}
+		else if(type->IsString())
+		{
+			puts("got string");
+			auto s = parseString(env, type);
+			puts(s.c_str());
+		}
+	};
+
 	JS_CLASS_METHOD_IMPL(WindowClass::ctor)
 	{
 		NativeJS::Window* win = nullptr;
@@ -98,8 +137,13 @@ namespace NativeJS::JS
 
 				if (win != nullptr)
 				{
-					args.This()->SetInternalField(0, v8::External::New(env.isolate(), win));
-					win->registerJsObject(std::addressof(env.worker()), args.This());
+					JS::Window* jsWin = win->registerJsObject(std::addressof(env.worker()), args.This());
+					args.This()->SetInternalField(0, v8::External::New(env.isolate(), jsWin));
+					args.This()->SetInternalField(1, v8::External::New(env.isolate(), win));
+					jsWin->onLoad();
+					v8::Local<v8::Object> jsx = jsWin->render().ToLocalChecked().As<v8::Object>();
+
+					parseJsx(env, jsx);
 				}
 			}
 		}
@@ -107,7 +151,7 @@ namespace NativeJS::JS
 
 	JS_CLASS_METHOD_IMPL(WindowClass::onShow)
 	{
-		NativeJS::Window* win = static_cast<NativeJS::Window*>(args.This()->GetInternalField(0).As<v8::External>()->Value());
+		NativeJS::Window* win = static_cast<NativeJS::Window*>(args.This()->GetInternalField(1).As<v8::External>()->Value());
 		args.GetReturnValue().Set(env.doAsyncWork([](Event* event) { static_cast<AsyncEvent*>(event)->data<NativeJS::Window>()->show(); }, nullptr, win, true));
 	}
 
@@ -118,11 +162,12 @@ namespace NativeJS::JS
 		builder.setMethod("onLoad");
 		builder.setMethod("minimize");
 		builder.setMethod("maximize");
-		builder.setMethod("unmaximize"); // ??
+		builder.setMethod("unmaximize"); // ? What to name ?
 		builder.setMethod("show", onShow);
 		builder.setMethod("close");
 		builder.setMethod("onClose");
 		builder.setMethod("onClosed");
-		builder.setInternalFieldCount(1);
+		builder.setMethod("render");
+		builder.setInternalFieldCount(2);
 	}
 }

@@ -339,7 +339,7 @@ namespace NativeJS
 
 			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
 			{
-				logger().debug("got event ", msg.message);
+				// logger().debug("got event ", msg.message);
 				if (msg.message == WM_QUIT)
 				{
 					emitEvent(msg.hwnd, msg.message, msg.wParam, msg.lParam); // ???

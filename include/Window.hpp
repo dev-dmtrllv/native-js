@@ -39,7 +39,7 @@ namespace NativeJS
 		inline WindowManager& windowManager() const { return windowManager_; }
 		const GFX::Renderer& renderer() const { return renderer_; };
 
-		void registerJsObject(Worker* worker, v8::Local<v8::Value> jsWindow);
+		JS::Window* registerJsObject(Worker* worker, v8::Local<v8::Value> jsWindow);
 		JS::Window* getJsObject(Worker* worker);
 		JS::Window* getJsObject(Worker& worker);
 

@@ -36,13 +36,14 @@ namespace NativeJS
 
 	}
 
-	void Window::registerJsObject(Worker* worker, v8::Local<v8::Value> jsWindow)
+	JS::Window* Window::registerJsObject(Worker* worker, v8::Local<v8::Value> jsWindow)
 	{
 		callThreadSafe([&]()
 		{
 			jsObjects_.emplace(worker, worker->env());
 			jsObjects_.at(worker).wrap(jsWindow);
 		});
+		return std::addressof(jsObjects_.at(worker));
 	}
 
 	JS::Window* Window::getJsObject(Worker* worker)

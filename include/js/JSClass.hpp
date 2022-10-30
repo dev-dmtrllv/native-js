@@ -6,9 +6,9 @@
 #include "js/JSUtils.hpp"
 
 #define JS_METHOD_DECL(__NAME__) private: v8::Persistent<v8::Function> __NAME__##_; \
-public: void __NAME__(std::initializer_list<v8::Local<v8::Value>> args = {});
+public:  v8::MaybeLocal<v8::Value> __NAME__(std::initializer_list<v8::Local<v8::Value>> args = {});
 
-#define JS_METHOD_IMPL(__NAME__) void __NAME__(std::initializer_list<v8::Local<v8::Value>> args) { __NAME__##_.Get(env_.isolate())->CallAsFunction(env_.context(), value_.Get(env_.isolate()), args.size(), const_cast<v8::Local<v8::Value>*>(args.begin())); }
+#define JS_METHOD_IMPL(__NAME__) v8::MaybeLocal<v8::Value> __NAME__(std::initializer_list<v8::Local<v8::Value>> args) { return __NAME__##_.Get(env_.isolate())->CallAsFunction(env_.context(), value_.Get(env_.isolate()), args.size(), const_cast<v8::Local<v8::Value>*>(args.begin())); }
 
 #define JS_CLASS_BODY(__NAME__) public: \
 	__NAME__(const Env& env) : Class(env) { } \

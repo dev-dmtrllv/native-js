@@ -5,8 +5,6 @@
 #include "js/JSUtils.hpp"
 #include "Logger.hpp"
 
-#define JS_CALLBACK(__NAME__) void __NAME__(const v8::FunctionCallbackInfo<v8::Value>& args)
-
 namespace NativeJS
 {
 	namespace JS
@@ -143,7 +141,6 @@ namespace NativeJS
 
 			JS_CALLBACK(log)
 			{
-				const Env& env = Env::fromIsolate(args.GetIsolate());
 				const int length = args.Length();
 
 				std::string logString;

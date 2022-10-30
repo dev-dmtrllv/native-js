@@ -15,6 +15,10 @@
 		{
 			"name": "test app",
 			"path": "./test"
+		},
+		{
+			"name": "ui testing",
+			"path": "./ui-testing"
 		}
 	],
 	"settings": {

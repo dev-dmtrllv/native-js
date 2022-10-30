@@ -3,6 +3,11 @@
 #include "framework.hpp"
 #include "concepts.hpp"
 
+#define JS_CALLBACK(__NAME__) void __NAME__##wrapped(const JS::Env& env, const v8::FunctionCallbackInfo<v8::Value>& args);\
+void __NAME__ (const v8::FunctionCallbackInfo<v8::Value>& args) { __NAME__##wrapped(JS::Env::fromArgs(args), args); }\
+void __NAME__##wrapped(const JS::Env& env, const v8::FunctionCallbackInfo<v8::Value>& args)
+
+
 namespace NativeJS::JS
 {
 	class BaseEnv;

@@ -9,7 +9,7 @@ declare module "native-js"
 			backgroundColor?: Color;
 		};
 
-		export class Window
+		export abstract class Window
 		{
 			public static readonly create: <T extends Window>(type: new (title: string, options?: WindowOptions) => T, title: string, options?: WindowOptions) => Promise<T>;
 
@@ -22,6 +22,8 @@ declare module "native-js"
 			protected onLoad(e: IEvent): void;
 			protected onClose(e: ICancelableEvent): void;
 			protected onClosed(e: IEvent): void;
+
+			protected abstract render(): JSX.Element;
 		}
 	}
 

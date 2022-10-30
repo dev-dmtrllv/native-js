@@ -21,6 +21,7 @@ namespace NativeJS
 			JS_METHOD_DECL(onClose);
 			JS_METHOD_DECL(onClosed);
 			JS_METHOD_DECL(onLoad);
+			JS_METHOD_DECL(render);
 		};
 
 		class WindowClass : public Class
